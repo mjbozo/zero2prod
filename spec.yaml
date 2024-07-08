@@ -1,5 +1,4 @@
 #! spec.yaml
-
 name: zero2prod
 
 # Check https://www.digitalocean.com/docs/app-platform/#regional-availability for alist of all the available options
@@ -13,6 +12,7 @@ services:
     github:
       branch: main
       # Deploy a new version on every commit to main
+      deploy_on_push: true
       repo: mjbozo/zero2prod
 
     # Active prob used by DigitalOcean to ensure our application is healthy
