@@ -19,10 +19,7 @@ impl EmailClient {
         timeout: std::time::Duration,
     ) -> Self {
         return Self {
-            http_client: Client::builder()
-                .timeout(timeout)
-                .build()
-                .unwrap(),
+            http_client: Client::builder().timeout(timeout).build().unwrap(),
             base_url,
             sender,
             authorisation_token,
@@ -174,7 +171,12 @@ mod tests {
 
     /// Get a test instance of `EmailClient`
     fn email_client(base_url: String) -> EmailClient {
-        return EmailClient::new(base_url, email(), Secret::new(Faker.fake()), std::time::Duration::from_millis(200));
+        return EmailClient::new(
+            base_url,
+            email(),
+            Secret::new(Faker.fake()),
+            std::time::Duration::from_millis(200),
+        );
     }
 
     #[tokio::test]
@@ -191,7 +193,6 @@ mod tests {
             .expect(1)
             .mount(&mock_server)
             .await;
-
 
         let _ = email_client
             .send_email(email(), &subject(), &content(), &content())

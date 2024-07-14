@@ -2,8 +2,8 @@
 
 use actix_web::dev::Server;
 use actix_web::{web, App, HttpServer};
-use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
@@ -50,7 +50,6 @@ impl Application {
         return self.server.await;
     }
 }
-
 
 pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
     return PgPoolOptions::new().connect_lazy_with(configuration.with_db());
