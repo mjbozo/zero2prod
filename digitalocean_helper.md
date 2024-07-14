@@ -24,3 +24,14 @@ The database connections string can be found on the DigitalOcean dashboard under
 Settings > newsletter > Connection Details
 
 > Note: DigitalOcean database 'Trusted Sources' must be disabled to perform database migration.
+
+
+# New Migration Script
+To generate a new migration script, run:
+`sqlx migrate add SCRIPT_NAME`
+
+Then edit the script with the appropriate SQL.
+
+
+
+> Note: Remember to run cargo sqlx prepare after updating sqlx macros for deployments.
