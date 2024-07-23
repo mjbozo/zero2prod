@@ -1,34 +1,57 @@
 //! src/routes/subscriptions_confirm.rs
 
-use actix_web::{web, HttpResponse};
+use actix_web::http::StatusCode;
+use actix_web::{web, HttpResponse, ResponseError};
+use anyhow::Context;
 use sqlx::PgPool;
 use uuid::Uuid;
+
+use crate::routes::error_chain_fmt;
 
 #[derive(serde::Deserialize)]
 pub struct Parameters {
     subscription_token: String,
 }
 
+#[derive(thiserror::Error)]
+pub enum ConfirmSubscriberError {
+    #[error("No subscriber with associated token")]
+    UnauthorisedError,
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
+}
+
+impl ResponseError for ConfirmSubscriberError {
+    fn status_code(&self) -> StatusCode {
+        return match self {
+            ConfirmSubscriberError::UnauthorisedError => StatusCode::UNAUTHORIZED,
+            ConfirmSubscriberError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        };
+    }
+}
+
+impl std::fmt::Debug for ConfirmSubscriberError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        return error_chain_fmt(self, f);
+    }
+}
+
 #[tracing::instrument(
     name = "Confirm a pending subscriber"
     skip(parameters)
 )]
-pub async fn confirm(parameters: web::Query<Parameters>, pool: web::Data<PgPool>) -> HttpResponse {
-    let id = match get_subscriber_id_from_token(&pool, &parameters.subscription_token).await {
-        Ok(id) => id,
-        Err(_) => return HttpResponse::InternalServerError().finish(),
-    };
-
-    return match id {
-        None => HttpResponse::Unauthorized().finish(),
-        Some(subscriber_id) => {
-            if confirm_subscriber(&pool, subscriber_id).await.is_err() {
-                return HttpResponse::InternalServerError().finish();
-            }
-
-            return HttpResponse::Ok().finish();
-        }
-    };
+pub async fn confirm(
+    parameters: web::Query<Parameters>,
+    pool: web::Data<PgPool>,
+) -> Result<HttpResponse, ConfirmSubscriberError> {
+    let subscriber_id = get_subscriber_id_from_token(&pool, &parameters.subscription_token)
+        .await
+        .context("Failed to retrieve the subscriber ID associated with the provided token")?
+        .ok_or(ConfirmSubscriberError::UnauthorisedError)?;
+    confirm_subscriber(&pool, subscriber_id)
+        .await
+        .context("Failed to update the subscriber status to `confirmed`")?;
+    return Ok(HttpResponse::Ok().finish());
 }
 
 #[tracing::instrument(name = "Mark subscriber as confirmed", skip(subscriber_id, pool))]
