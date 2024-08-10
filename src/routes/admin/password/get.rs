@@ -52,7 +52,7 @@ pub async fn change_password_form(
             >
         </label>
     </form>
-    <p><a href="/admin/dashboard">&lt;- Back</a></p>
+    <p><a href="/admin/dashboard">‹ Back</a></p>
 </body>
 </html>"#
         )));
