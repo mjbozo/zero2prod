@@ -7,7 +7,7 @@ use sqlx::{
     ConnectOptions,
 };
 
-use crate::domain::SubscriberEmail;
+use crate::{domain::SubscriberEmail, email_client::EmailClient};
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
@@ -32,6 +32,17 @@ impl EmailClientSettings {
 
     pub fn timeout(&self) -> std::time::Duration {
         return std::time::Duration::from_millis(self.timeout_milliseconds);
+    }
+
+    pub fn client(self) -> EmailClient {
+        let sender_email = self.sender().expect("Invalid sender email address");
+        let timeout = self.timeout();
+        return EmailClient::new(
+            self.base_url,
+            sender_email,
+            self.authorisation_token,
+            timeout,
+        );
     }
 }
 
